@@ -25,3 +25,15 @@ async fn health_check_should_work() {
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
 }
+
+#[tokio::test]
+async fn subcribe_returns_200_for_valid_form_data() {
+    // Arrange
+    let app_address = spawn_app();
+    let client = reqwest::Client::new();
+
+    // Act
+    let body = "name=Le%20Guin&email=ursula_le_guin%40gmail.com";
+
+    // Assert
+}

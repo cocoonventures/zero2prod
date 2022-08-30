@@ -1,6 +1,6 @@
 // use tokio::net::TcpListener;
-use zero2prod::run;
 use std::net::TcpListener;
+use zero2prod::run;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
