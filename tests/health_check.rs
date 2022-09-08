@@ -43,7 +43,7 @@ async fn subcribe_returns_200_for_valid_form_data() {
         .expect("Failed to execute request.");
 
     // Assert
-    assert_eq!(200,response.status().as_u16());
+    assert_eq!(200, response.status().as_u16());
 }
 
 #[tokio::test]
@@ -51,20 +51,24 @@ async fn subscribe_return_400_for_missing_data() {
     let app_address = spawn_app();
     let client = reqwest::Client::new();
     let test_cases = vec![
-        ("name=Le%20Guin","missing the email"),
-        ("email=ursula_le_guin%40gmail.com","missing the name"),
-        ("","missing both email and name")
+        ("name=Le%20Guin", "missing the email"),
+        ("email=ursula_le_guin%40gmail.com", "missing the name"),
+        ("", "missing both email and name"),
     ];
 
     for (invalid_body, error_msg) in test_cases {
         let response = client
-            .post(&format!("{}/subscriptions",&app_address))
-            .header("Content-Type","application/x-www-form-urlencoded")
+            .post(&format!("{}/subscriptions", &app_address))
+            .header("Content-Type", "application/x-www-form-urlencoded")
             .body(invalid_body)
             .send()
             .await
             .expect("Failed to execute request.");
-        assert_eq!(400,response.status().as_u16(),
-                   "The API did not fail with 400 Bad Request when the payload was {}",error_msg);
+        assert_eq!(
+            400,
+            response.status().as_u16(),
+            "The API did not fail with 400 Bad Request when the payload was {}",
+            error_msg
+        );
     }
 }
