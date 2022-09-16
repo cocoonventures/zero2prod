@@ -11,13 +11,16 @@ pub struct Model {
     pub email: String,
 }
 
-#[derive(Copy, Clone, Debug, EnumIter)]
-pub enum Relation {}
-
-impl RelationTrait for Relation {
-    fn def(&self) -> RelationDef {
-        panic!("No RelationDef")
-    }
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(has_one = "super::subscription::Entity")]
+    Subscription,
 }
+
+// impl RelationTrait for Relation {
+//     fn def(&self) -> RelationDef {
+//         panic!("No RelationDef")
+//     }
+// }
 
 impl ActiveModelBehavior for ActiveModel {}
