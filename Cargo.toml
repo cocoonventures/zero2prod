@@ -1,13 +1,12 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace]
-members = [".","migration","entity"]
+members = [".", "entity", "migration"]
 
 [package]
 name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
-
 
 [lib]
 path = "src/lib.rs"
@@ -20,8 +19,8 @@ name = "zero2prod"
 reqwest = { version = "0.11.11", features = ["json", "serde_json"] }
 
 [dependencies]
-
-
+entity = {path = "entity"}
+migration = {path = "migration"}
 actix-web = "4.0.0"
 sea-orm = { version = "0.9.2", features = ["sqlx-postgres", "runtime-tokio-rustls", "macros", "debug-print", "mock"] }
 serde = { version = "1.0.144", features = ["derive"] }
