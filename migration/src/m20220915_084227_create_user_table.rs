@@ -38,5 +38,5 @@ enum User {
     Table,
     Id,
     Name,
-    Email
+    Email,
 }

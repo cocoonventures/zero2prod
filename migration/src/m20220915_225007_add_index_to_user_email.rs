@@ -9,19 +9,21 @@ impl MigrationTrait for Migration {
         manager
             .create_index(
                 sea_query::Index::create()
-                .name("idx_user_email")
-                .table(User::Table)
-                .col(User::Email).to_owned()
+                    .name("idx_user_email")
+                    .table(User::Table)
+                    .col(User::Email)
+                    .to_owned(),
             )
             .await
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         manager
-            .drop_index(sea_query::Index::drop()
-                .name("idx_user_email")
-                .table(User::Table)
-                .to_owned()
+            .drop_index(
+                sea_query::Index::drop()
+                    .name("idx_user_email")
+                    .table(User::Table)
+                    .to_owned(),
             )
             .await
     }
@@ -30,5 +32,5 @@ impl MigrationTrait for Migration {
 #[derive(Iden)]
 enum User {
     Table,
-    Email
+    Email,
 }

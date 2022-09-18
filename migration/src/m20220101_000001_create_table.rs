@@ -23,12 +23,9 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Subscription::UserId)
                             .integer()
                             .not_null()
-                            .default(Value::Int(None))
+                            .default(Value::Int(None)),
                     )
-                    .col(
-                        ColumnDef::new(Subscription::SubscribedAt)
-                            .timestamp_with_time_zone()
-                    )
+                    .col(ColumnDef::new(Subscription::SubscribedAt).timestamp_with_time_zone())
                     .to_owned(),
             )
             .await
