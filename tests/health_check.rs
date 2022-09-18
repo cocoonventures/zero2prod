@@ -3,7 +3,11 @@
 
 // use tokio::net::TcpListener;
 use std::net::TcpListener;
+use actix_web::connect;
 use zero2prod::startup::run;
+use zero2prod::config::get_config;
+use sea_orm::Database;
+use sea_orm::DatabaseConnection;
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to a random address");
@@ -31,6 +35,10 @@ async fn health_check_should_work() {
 async fn subcribe_returns_200_for_valid_form_data() {
     // Arrange
     let app_address = spawn_app();
+    let config = get_config().expect("Failed to read config file.");
+    let connect_url = config.database.connection_url();
+
+    let _db: DatabaseConnection = Database::connect(connect_url).await.unwrap();
     let client = reqwest::Client::new();
 
     // Act

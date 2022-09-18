@@ -17,23 +17,15 @@ pub struct DatabaseSettings {
 impl DatabaseSettings {
     pub fn connection_url(&self) -> String {
         format!(
-            "{}://{}:{}:{}:{}/{}",
-            self.adapter,
-            self.username,
-            self.password,
-            self.host,
-            self.port,
-            self.db_name
+            "{}://{}:{}@{}:{}/{}",
+            self.adapter, self.username, self.password, self.host, self.port, self.db_name
         )
     }
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
     let settings = config::Config::builder()
-        .add_source(config::File::new(
-            "config/config.yml",
-            config::FileFormat::Yaml,
-        ))
+        .add_source(config::File::with_name("src/config/config.yml"))
         .build()?;
 
     settings.try_deserialize::<Settings>()
