@@ -1,5 +1,5 @@
 // use tokio::net::TcpListener;
-use std::env;
+// use std::env;
 use std::net::TcpListener;
 
 use sea_orm::error::DbErr;
@@ -13,25 +13,12 @@ use migration::{Migrator, MigratorTrait};
 #[allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use zero2prod::config::{get_config, DatabaseSettings};
+use zero2prod::config::{get_config};
 use zero2prod::startup::*;
 
-async fn get_db(db_settings: Option<DatabaseSettings>) -> Result<DatabaseConnection, DbErr> {
-    // let db_url =
+async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {
+    // let db_url = env::var("ZERO2PROD_DB_URL").expect("ENV[ZERO2PROD_DB] must be defined if database isn't defined in config.yml")
 
-    let db_url = match db_settings {
-        Some(settings) => format!(
-            "{}://{}:{}:{}:{}/{}",
-            settings.adapter,
-            settings.username,
-            settings.password,
-            settings.host,
-            settings.port,
-            settings.db_name
-        ),
-        _ => env::var("ZERO2PROD_DB_URL")
-            .expect("ENV[ZERO2PROD_DB] must be defined if database isn't defined in config.yml"),
-    };
     let db: DatabaseConnection = Database::connect(db_url).await?;
     Ok(db)
 }
@@ -40,7 +27,7 @@ async fn get_db(db_settings: Option<DatabaseSettings>) -> Result<DatabaseConnect
 async fn main() -> Result<(), std::io::Error> {
     let config = get_config().expect("Failed to read config.");
     let address = format!("127.0.0.1:{}", config.application_port);
-    let _db = get_db(Some(config.database))
+    let _db = get_db(config.database.connection_url())
         .await
         .expect("Problem getting db connection");
     let listener = TcpListener::bind(address)?;

@@ -14,6 +14,20 @@ pub struct DatabaseSettings {
     pub db_name: String,
 }
 
+impl DatabaseSettings {
+    pub fn connection_url(&self) -> String {
+        format!(
+            "{}://{}:{}:{}:{}/{}",
+            self.adapter,
+            self.username,
+            self.password,
+            self.host,
+            self.port,
+            self.db_name
+        )
+    }
+}
+
 pub fn get_config() -> Result<Settings, config::ConfigError> {
     let settings = config::Config::builder()
         .add_source(config::File::new(
