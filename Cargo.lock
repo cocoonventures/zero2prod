@@ -811,7 +811,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "entity"
+name = "entities"
 version = "0.1.0"
 dependencies = [
  "sea-orm",
@@ -3092,7 +3092,7 @@ version = "0.1.0"
 dependencies = [
  "actix-web",
  "config",
- "entity",
+ "entities",
  "migration",
  "reqwest",
  "sea-orm",

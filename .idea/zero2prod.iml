@@ -6,6 +6,7 @@
       <sourceFolder url="file://$MODULE_DIR$/tests" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/entity/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/migration/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/entities/src" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
       <excludeFolder url="file://$MODULE_DIR$/migration/target" />
     </content>

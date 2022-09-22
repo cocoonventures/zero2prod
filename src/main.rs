@@ -7,13 +7,17 @@ use sea_orm::Database;
 use sea_orm::DatabaseConnection;
 // use sea_orm::{entity::*, query::*};
 
+// mod entities;
+// use entities::{prelude, *};
+use entities::*;
+
 #[allow(unused)]
 use migration::{Migrator, MigratorTrait};
 
 #[allow(unused)]
 use serde::{Deserialize, Serialize};
 
-use zero2prod::config::{get_config};
+use zero2prod::config::get_config;
 use zero2prod::startup::*;
 
 async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {

@@ -2,12 +2,19 @@
 //!
 
 // use tokio::net::TcpListener;
-use std::net::TcpListener;
 use actix_web::connect;
-use zero2prod::startup::run;
-use zero2prod::config::get_config;
+use sea_orm::entity::prelude::*;
 use sea_orm::Database;
 use sea_orm::DatabaseConnection;
+
+// use entities::subscription::Relation::User;
+use entities::prelude::*;
+use entities::*; //subscription::*;
+                 // use entities::*;
+
+use std::net::TcpListener;
+use zero2prod::config::get_config;
+use zero2prod::startup::run;
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to a random address");
@@ -38,7 +45,7 @@ async fn subcribe_returns_200_for_valid_form_data() {
     let config = get_config().expect("Failed to read config file.");
     let connect_url = config.database.connection_url();
 
-    let _db: DatabaseConnection = Database::connect(connect_url).await.unwrap();
+    let db: DatabaseConnection = Database::connect(connect_url).await.unwrap();
     let client = reqwest::Client::new();
 
     // Act
@@ -51,8 +58,22 @@ async fn subcribe_returns_200_for_valid_form_data() {
         .await
         .expect("Failed to execute request.");
 
+    let s = Subscription::find()
+        .one(&db)
+        .await
+        .expect("Failed to fetch subscription");
+    let s: subscription::Model = s.expect("Failed to fetch a saved subscription"); //unwrap();
+    let u = s
+        .find_related(User)
+        .one(&db)
+        .await
+        .expect("Failed to fetch a user in connection with a subscription");
+    let u: user::Model = u.unwrap();
+
     // Assert
     assert_eq!(200, response.status().as_u16());
+    assert_eq!("Le Guin", u.name);
+    assert_eq!("ursula_le_guin@gmail.com", u.email)
 }
 
 #[tokio::test]
