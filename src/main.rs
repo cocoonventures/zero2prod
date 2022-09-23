@@ -9,7 +9,7 @@ use sea_orm::DatabaseConnection;
 
 // mod entities;
 // use entities::{prelude, *};
-use entities::*;
+// use entities::*;
 
 #[allow(unused)]
 use migration::{Migrator, MigratorTrait};
@@ -31,9 +31,9 @@ async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {
 async fn main() -> Result<(), std::io::Error> {
     let config = get_config().expect("Failed to read config.");
     let address = format!("127.0.0.1:{}", config.application_port);
-    let _db = get_db(config.database.connection_url())
+    let db = get_db(config.database.connection_url())
         .await
         .expect("Problem getting db connection");
     let listener = TcpListener::bind(address)?;
-    run(listener)?.await
+    run(listener, db)?.await
 }
