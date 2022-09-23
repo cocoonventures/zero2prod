@@ -43,7 +43,7 @@ async fn subcribe_returns_200_for_valid_form_data() {
     // Arrange
     let app_address = spawn_app();
     let config = get_config().expect("Failed to read config file.");
-    let connect_url = config.database.connection_url();
+    let connect_url: String = config.database.connection_url();
 
     let db: DatabaseConnection = Database::connect(connect_url).await.unwrap();
     let client = reqwest::Client::new();
@@ -61,14 +61,15 @@ async fn subcribe_returns_200_for_valid_form_data() {
     let s = Subscription::find()
         .one(&db)
         .await
-        .expect("Failed to fetch subscription");
-    let s: subscription::Model = s.expect("Failed to fetch a saved subscription"); //unwrap();
+        .expect("Failed with a DbErr")
+        .expect("Failed to fetch a saved subscription");
+    // let s: subscription::Model = s.expect("Failed to fetch a saved subscription"); //unwrap();
     let u = s
         .find_related(User)
         .one(&db)
         .await
+        .expect("Finding related user failed with a DbErr")
         .expect("Failed to fetch a user in connection with a subscription");
-    let u: user::Model = u.unwrap();
 
     // Assert
     assert_eq!(200, response.status().as_u16());
