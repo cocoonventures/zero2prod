@@ -4,8 +4,8 @@
 // use tokio::net::TcpListener;
 use actix_web::connect;
 use sea_orm::entity::prelude::*;
-use sea_orm::Database;
-use sea_orm::DatabaseConnection;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
+use std::time::Duration;
 
 // use entities::subscription::Relation::User;
 use entities::prelude::*;
@@ -16,10 +16,26 @@ use std::net::TcpListener;
 use zero2prod::config::get_config;
 use zero2prod::startup::run;
 
+pub struct TestApp {
+    pub address: String,
+    pub db_pool: ConnectOptions,
+}
+
 fn spawn_app() -> String {
+    let config = get_config().expect("Failed to read config.");
+    let mut db_pool = ConnectOptions::new(config.database.connection_url());
+    db_pool
+        .max_connections(100)
+        .min_connections(5)
+        .connect_timeout(Duration::from_secs(8))
+        .idle_timeout(Duration::from_secs(8))
+        .max_lifetime(Duration::from_secs(10))
+        .sqlx_logging(true)
+        .sqlx_logging_level(log::LevelFilter::Info);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to a random address");
     let port = listener.local_addr().unwrap().port();
-    let server = run(listener).expect("Failed to bind address");
+    let server = run(listener, db_pool).expect("Failed to bind address");
     let _ = tokio::spawn(server);
     format!("http://127.0.0.1:{}", port)
 }
