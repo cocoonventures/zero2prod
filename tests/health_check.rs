@@ -21,7 +21,7 @@ pub struct TestApp {
     pub db_pool: ConnectOptions,
 }
 
-fn spawn_app() -> String {
+fn spawn_app() -> TestApp {
     let config = get_config().expect("Failed to read config.");
     let mut db_pool = ConnectOptions::new(config.database.connection_url());
     db_pool
@@ -35,14 +35,18 @@ fn spawn_app() -> String {
 
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind to a random address");
     let port = listener.local_addr().unwrap().port();
-    let server = run(listener, db_pool).expect("Failed to bind address");
+    let server = run(listener, db_pool.clone()).expect("Failed to bind address");
     let _ = tokio::spawn(server);
-    format!("http://127.0.0.1:{}", port)
+    TestApp {
+        address: format!("http://127.0.0.1:{}", port),
+        db_pool: db_pool,
+    }
 }
 
 #[tokio::test]
 async fn health_check_should_work() {
-    let address = spawn_app();
+    let app = spawn_app();
+    let address = app.address;
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/health_check", &address))
@@ -57,7 +61,8 @@ async fn health_check_should_work() {
 #[tokio::test]
 async fn subcribe_returns_200_for_valid_form_data() {
     // Arrange
-    let app_address = spawn_app();
+    let app = spawn_app();
+    let app_address = app.address;
     let config = get_config().expect("Failed to read config file.");
     let connect_url: String = config.database.connection_url();
 
@@ -95,7 +100,8 @@ async fn subcribe_returns_200_for_valid_form_data() {
 
 #[tokio::test]
 async fn subscribe_return_400_for_missing_data() {
-    let app_address = spawn_app();
+    let app = spawn_app();
+    let app_address = app.address;
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=Le%20Guin", "missing the email"),
