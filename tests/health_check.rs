@@ -21,7 +21,7 @@ pub struct TestApp {
     pub db_pool: ConnectOptions,
 }
 
-fn spawn_app() -> TestApp {
+async fn spawn_app() -> TestApp {
     let config = get_config().expect("Failed to read config.");
     let mut db_pool = ConnectOptions::new(config.database.connection_url());
     db_pool
@@ -64,9 +64,9 @@ async fn subcribe_returns_200_for_valid_form_data() {
     let app = spawn_app().await;
     let app_address = app.address;
     let config = get_config().expect("Failed to read config file.");
-    let connect_url: String = config.database.connection_url();
+    // let connect_url: String = config.database.connection_url();
 
-    let db: DatabaseConnection = Database::connect(connect_url).await.unwrap();
+    let db: DatabaseConnection = Database::connect(app.db_pool).await.unwrap();
     let client = reqwest::Client::new();
 
     // Act
