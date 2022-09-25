@@ -45,7 +45,7 @@ fn spawn_app() -> TestApp {
 
 #[tokio::test]
 async fn health_check_should_work() {
-    let app = spawn_app();
+    let app = spawn_app().await;
     let address = app.address;
     let client = reqwest::Client::new();
     let response = client
@@ -61,7 +61,7 @@ async fn health_check_should_work() {
 #[tokio::test]
 async fn subcribe_returns_200_for_valid_form_data() {
     // Arrange
-    let app = spawn_app();
+    let app = spawn_app().await;
     let app_address = app.address;
     let config = get_config().expect("Failed to read config file.");
     let connect_url: String = config.database.connection_url();
