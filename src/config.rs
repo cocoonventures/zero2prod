@@ -4,7 +4,7 @@ pub struct Settings {
     pub application_port: u16,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(serde::Deserialize, Clone)]
 pub struct DatabaseSettings {
     pub adapter: String,
     pub username: String,
@@ -12,6 +12,7 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub db_name: String,
+    pub test_db_prefix: String,
 }
 
 impl DatabaseSettings {
@@ -19,6 +20,13 @@ impl DatabaseSettings {
         format!(
             "{}://{}:{}@{}:{}/{}",
             self.adapter, self.username, self.password, self.host, self.port, self.db_name
+        )
+    }
+
+    pub fn connection_url_nodb(&self) -> String {
+        format!(
+            "{}://{}:{}@{}:{}/postgres",
+            self.adapter, self.username, self.password, self.host, self.port
         )
     }
 }

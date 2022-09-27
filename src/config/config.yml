@@ -6,3 +6,4 @@ database:
   username: "ninja"
   password: "n!nj4d8"
   db_name: "newsletter"
+  test_db_prefix: "test_newsletter_"
