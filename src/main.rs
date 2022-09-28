@@ -1,6 +1,4 @@
-// use tokio::net::TcpListener;
-// use std::env;
-
+use env_logger::Env;
 #[allow(unused_imports)]
 use migration::{Migrator, MigratorTrait};
 use sea_orm::error::DbErr;
@@ -24,8 +22,7 @@ async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    env_logger::init();
-
+    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let config = get_config().expect("Failed to read config.");
     let address = format!("127.0.0.1:{}", config.application_port);
 
