@@ -64,6 +64,7 @@ async fn configure_db(settings: DatabaseSettings) -> ConnectOptions {
         .await
         .expect("Problem creating test db");
 
+    // have to reconnect to the actual database
     let db = Database::connect(settings.connection_url().clone())
         .await
         .expect("Problem connecting to url (config_db)");
