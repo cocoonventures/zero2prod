@@ -3,11 +3,12 @@ use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder};
 use chrono::prelude::*;
 use chrono::Utc;
 use entities::*;
-use log::{error, info};
+// use log::{error, info};
 use sea_orm::ActiveValue::*;
 use sea_orm::{ActiveModelTrait, ConnectOptions};
 use sea_orm::{Database, DatabaseConnection};
 use std::ops::Deref;
+use tracing::*;
 use uuid::Uuid;
 
 #[allow(unused)]
