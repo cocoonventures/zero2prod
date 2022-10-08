@@ -6,6 +6,9 @@ use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use serde::{Deserialize, Serialize};
 use std::net::TcpListener;
 use std::time::Duration;
+use tracing::subscriber::set_global_default;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 use zero2prod::config::get_config;
 use zero2prod::startup::*;
 
@@ -22,7 +25,17 @@ async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
+    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
+    let formatting_layer = BunyanFormattingLayer::new("zero2prod".into(), std::io::stdout);
+
+    let subscriber = Registry::default()
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
+
+    set_global_default(subscriber).expect("Failed to set subscriber ");
+
+    // env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
     let config = get_config().expect("Failed to read config.");
     let address = format!("127.0.0.1:{}", config.application_port);
 
