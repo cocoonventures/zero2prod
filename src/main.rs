@@ -25,6 +25,7 @@ async fn get_db(db_url: String) -> Result<DatabaseConnection, DbErr> {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+    LogTracer::init().expect("Failed to set logger");
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     let formatting_layer = BunyanFormattingLayer::new("zero2prod".into(), std::io::stdout);
 
