@@ -7,6 +7,7 @@ use config::Config;
 use entities::prelude::*;
 use entities::*;
 use migration::{Migrator, MigratorTrait};
+use once_cell::sync::Lazy;
 use sea_orm::entity::prelude::*;
 use sea_orm::ConnectionTrait;
 use sea_orm::{
@@ -14,9 +15,23 @@ use sea_orm::{
 };
 use std::net::TcpListener;
 use std::time::Duration;
-use uuid;
+use uuid::Uuid;
 use zero2prod::config::*;
 use zero2prod::startup::run;
+use zero2prod::telemetry::{get_subscriber, init_subscriber};
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let default_filter_level = "info".to_string();
+    let subscriber_name = "test".to_string();
+
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::stdout);
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = get_subscriber(subscriber_name, default_filter_level, std::io::sink);
+        init_subscriber(subscriber);
+    }
+});
 
 pub struct TestApp {
     pub address: String,
@@ -59,7 +74,7 @@ async fn configure_db(settings: DatabaseSettings) -> ConnectOptions {
         .await
         .expect("Problem connecting to url (config_db)");
     let create_db_str = format!("CREATE DATABASE \"{}\";", settings.db_name);
-    let create_db_res: ExecResult = db
+    let _create_db_res: ExecResult = db
         .execute(Statement::from_string(backend, create_db_str.to_owned()))
         .await
         .expect("Problem creating test db");
@@ -87,6 +102,7 @@ async fn configure_db(settings: DatabaseSettings) -> ConnectOptions {
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
     let mut config = get_config().expect("Failed to read config.");
     config.database.db_name = format!(
         "{}{}",
@@ -110,7 +126,7 @@ async fn spawn_app() -> TestApp {
 #[tokio::test]
 async fn health_check_should_work() {
     let app = spawn_app().await;
-    let address = app.address;
+    let address = app.address.clone();
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/health_check", &address))
@@ -120,7 +136,7 @@ async fn health_check_should_work() {
 
     assert!(response.status().is_success());
     assert_eq!(Some(0), response.content_length());
-    app.trash_test_db();
+    let _ = app.trash_test_db();
 }
 
 #[tokio::test]
@@ -163,13 +179,13 @@ async fn subcribe_returns_200_for_valid_form_data() {
     assert_eq!(200, response.status().as_u16());
     assert_eq!("Le Guin", u.name);
     assert_eq!("ursula_le_guin@gmail.com", u.email);
-    app.trash_test_db();
+    let _ = app.trash_test_db();
 }
 
 #[tokio::test]
 async fn subscribe_return_400_for_missing_data() {
     let app = spawn_app().await;
-    let app_address = app.address;
+    let app_address = app.address.clone();
     let client = reqwest::Client::new();
     let test_cases = vec![
         ("name=Le%20Guin", "missing the email"),
@@ -192,5 +208,5 @@ async fn subscribe_return_400_for_missing_data() {
             error_msg
         );
     }
-    app.trash_test_db();
+    let _ = app.trash_test_db();
 }

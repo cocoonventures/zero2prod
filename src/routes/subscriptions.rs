@@ -16,41 +16,36 @@ pub struct FormData {
     name: String,
 }
 
+#[tracing::instrument(
+    name = "Adding a subscriber",,
+    skip(form,db_pool),
+    fields(
+        request_id = %Uuid::new_v4(),
+        subscriber_name = %form.name,
+        subscriber_email = %form.email
+    )
+)]
 pub async fn subscribe(
     form: web::Form<FormData>,
     db_pool: web::Data<ConnectOptions>,
 ) -> impl Responder {
-    let request_id = Uuid::new_v4();
-    let request_span = info_span!(
-        "Adding new subscriber",
-        %request_id, subscriber_name = %form.name, subscriber_email = %form.email
-    );
-    let _request_span_guard = request_span.enter();
-
     let opts = db_pool.get_ref().clone();
-    let db = Database::connect(opts).await.expect(
-        format!(
-            "[r-uuid:{}] Problem getting db connections from pool options.",
-            request_id
-        )
-        .as_str(),
-    );
+    let db = Database::connect(opts)
+        .await
+        .expect(format!("Problem getting db connections from pool options.").as_str());
     let user = user::ActiveModel {
         name: Set(form.name.to_owned()),
         email: Set(form.email.to_owned()),
         ..Default::default()
     };
-    let user_span = tracing::info_span!(
-        "Adding user to database",
-        %request_id, subscriber_name = %form.name, subscriber_email = %form.email
-    );
+    let user_span = tracing::info_span!("Adding user to database");
     let user = user
         .insert(&db)
         .instrument(user_span)
         .await
-        .expect(format!("[r-uuid:{}] Problem inserting user into db", request_id).as_str());
+        .expect(format!("Problem inserting user into db").as_str());
 
-    let sub_span = tracing::info_span!("Adding user's associated subscription", %request_id);
+    let sub_span = tracing::info_span!("Adding user's associated subscription");
     let subscription = subscription::ActiveModel {
         user_id: Set(user.id),
         subscribed_at: Set(Utc::now().with_timezone(&FixedOffset::east(0))),
@@ -58,18 +53,11 @@ pub async fn subscribe(
     };
     match subscription.insert(&db).instrument(sub_span).await {
         Ok(_) => {
-            tracing::info!(
-                "[r-uuid:{}] User subscription saved successfully",
-                request_id
-            );
+            tracing::info!("User subscription saved successfully");
             HttpResponse::Ok().finish()
         }
         Err(e) => {
-            tracing::error!(
-                "[r-uuid:{}] Failed to save subscription, {:?}",
-                request_id,
-                e
-            );
+            tracing::error!("Failed to save subscription, {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
