@@ -4,6 +4,7 @@ use chrono::prelude::*;
 use chrono::Utc;
 use entities::*;
 use sea_orm::ActiveValue::*;
+use sea_orm::DbErr;
 use sea_orm::{ActiveModelTrait, ConnectOptions};
 use sea_orm::{Database, DatabaseConnection};
 use tracing::*; // Instrument; // use log::{error, info};
@@ -29,21 +30,38 @@ pub async fn subscribe(
     form: web::Form<FormData>,
     db_pool: web::Data<ConnectOptions>,
 ) -> impl Responder {
-    let opts = db_pool.get_ref().clone();
+    match insert_subscriber(&form, &db_pool).await {
+        Ok(_) => {
+            tracing::info!("User subscription saved successfully");
+            HttpResponse::Ok().finish()
+        }
+        Err(e) => {
+            tracing::error!("Failed to add subscription, {:?}", e);
+            HttpResponse::InternalServerError().finish()
+        }
+    }
+}
+
+#[tracing::instrument(
+    name = "Saving user and associated subscription to db"
+    skip(form, db_pool)
+)]
+pub async fn insert_subscriber(form: &FormData, db_pool: &ConnectOptions) -> Result<(), DbErr> {
+    let opts = db_pool.clone();
     let db = Database::connect(opts)
         .await
         .expect(format!("Problem getting db connections from pool options.").as_str());
+
     let user = user::ActiveModel {
         name: Set(form.name.to_owned()),
         email: Set(form.email.to_owned()),
         ..Default::default()
     };
     let user_span = tracing::info_span!("Adding user to database");
-    let user = user
-        .insert(&db)
-        .instrument(user_span)
-        .await
-        .expect(format!("Problem inserting user into db").as_str());
+    let user = user.insert(&db).instrument(user_span).await.map_err(|e| {
+        tracing::error!("Problem inserting user into db: {:?}", e);
+        e
+    })?;
 
     let sub_span = tracing::info_span!("Adding user's associated subscription");
     let subscription = subscription::ActiveModel {
@@ -51,14 +69,13 @@ pub async fn subscribe(
         subscribed_at: Set(Utc::now().with_timezone(&FixedOffset::east(0))),
         ..Default::default()
     };
-    match subscription.insert(&db).instrument(sub_span).await {
-        Ok(_) => {
-            tracing::info!("User subscription saved successfully");
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!("Failed to save subscription, {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    subscription
+        .insert(&db)
+        .instrument(sub_span)
+        .await
+        .map_err(|e| {
+            tracing::error!("Failed to insert associated subscription: {:?}", e);
+            e
+        })?;
+    Ok(())
 }

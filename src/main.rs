@@ -3,9 +3,11 @@ use env_logger::Env;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::error::DbErr;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
+use secrecy::ExposeSecret;
 use serde::{Deserialize, Serialize};
 use std::io::stdout;
 use std::net::TcpListener;
+use std::ops::Deref;
 use std::time::Duration;
 use zero2prod::config::get_config;
 use zero2prod::startup::*;
@@ -43,7 +45,8 @@ async fn main() -> Result<(), std::io::Error> {
 
     let config = get_config().expect("Failed to read config.");
     let address = format!("127.0.0.1:{}", config.application_port);
-    let db_pool = setup_db_pool(config.database.connection_url());
+    let url = config.database.connection_url().expose_secret().to_string();
+    let db_pool = setup_db_pool(url);
     let listener = TcpListener::bind(address)?;
 
     run(listener, db_pool)?.await
