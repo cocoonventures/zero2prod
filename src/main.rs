@@ -44,7 +44,7 @@ async fn main() -> Result<(), std::io::Error> {
     init_subscriber(subscriber);
 
     let config = get_config().expect("Failed to read config.");
-    let address = format!("127.0.0.1:{}", config.application_port);
+    let address = format!("{}:{}", config.application.host, config.application.port);
     let url = config.database.connection_url().expose_secret().to_string();
     let db_pool = setup_db_pool(url);
     let listener = TcpListener::bind(address)?;

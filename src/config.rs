@@ -3,7 +3,23 @@ use secrecy::{ExposeSecret, Secret};
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub application_port: u16,
+    pub application: ApplicationSettings,
+}
+
+/// Possible runtime environment for our application
+pub enum Environment {
+    Development,
+    Production,
+}
+
+///
+impl Environment {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Environment::Development => "development",
+            Environment::Production => "production",
+        }
+    }
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -15,6 +31,12 @@ pub struct DatabaseSettings {
     pub host: String,
     pub db_name: String,
     pub test_db_prefix: String,
+}
+
+#[derive(serde::Deserialize, Clone)]
+pub struct ApplicationSettings {
+    pub port: u16,
+    pub host: String,
 }
 
 impl DatabaseSettings {
@@ -47,9 +69,33 @@ impl DatabaseSettings {
 }
 
 pub fn get_config() -> Result<Settings, config::ConfigError> {
+    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+    let config_dir = base_path.join("config");
+
+    let environment: Environment = std::env::var("RUST_ENV")
+        .unwrap_or_else(|_| "development".into())
+        .try_into()
+        .expect("Failed to parse RUST_ENV");
+    let environment_filename = format!("{}.yml", environment.as_str());
     let settings = config::Config::builder()
-        .add_source(config::File::with_name("src/config/config.yml"))
+        .add_source(config::File::from(config_dir.join("base.yml")))
+        .add_source(config::File::from(config_dir.join(&environment_filename)))
+        // .add_source(config::File::with_name("src/config/config.yml"))
         .build()?;
 
     settings.try_deserialize::<Settings>()
+}
+
+impl TryFrom<String> for Environment {
+    type Error = String;
+    fn try_from(s: String) -> Result<Self, Self::Error> {
+        match s.to_lowercase().as_str() {
+            "development" => Ok(Self::Development),
+            "production" => Ok(Self::Production),
+            other => Err(format!(
+                "{} is not a supported environment. Ue either `development` or `production`",
+                other
+            )),
+        }
+    }
 }
