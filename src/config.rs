@@ -93,7 +93,7 @@ impl TryFrom<String> for Environment {
             "development" => Ok(Self::Development),
             "production" => Ok(Self::Production),
             other => Err(format!(
-                "{} is not a supported environment. Ue either `development` or `production`",
+                "{} is not a supported environment. Use either `development` or `production`",
                 other
             )),
         }
